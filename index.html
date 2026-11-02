@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ThermBench 3D — Laptop Thermal &amp; Bottleneck Sandbox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <!-- Left Sidebar: Hardware & Thermal Controls -->
+      <aside id="sidebar" class="sidebar" aria-label="Hardware and thermal configuration">
+        <div class="brand-header">
+          <div class="brand-mark" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <rect x="1.5" y="2.5" width="15" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+              <path d="M0.5 14.5H17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <rect x="5" y="5.5" width="3.5" height="3.5" fill="var(--accent)" />
+              <rect x="9.5" y="5.5" width="3.5" height="3.5" fill="var(--negative)" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">ThermBench 3D</span>
+            <span class="brand-scope">Thermal &amp; Bottleneck Lab</span>
+          </div>
+        </div>
+
+        <div id="controls-mount" class="controls-mount"></div>
+      </aside>
+
+      <!-- Main Workspace -->
+      <main class="workspace">
+        <!-- Top Title & Status Row -->
+        <header class="title-row">
+          <div class="title-left">
+            <h1 id="page-title">3D Laptop Thermal &amp; Bottleneck Sandbox</h1>
+            <p id="finding-line" class="finding-line">
+              Click any internal component in the exploded 3D assembly to inspect live die temperature, clock frequency, and load.
+            </p>
+          </div>
+          <div class="title-actions">
+            <div class="view-controls" role="group" aria-label="3D View Controls">
+              <button type="button" id="btn-explode-toggle" class="btn-secondary" aria-pressed="true">
+                Exploded View
+              </button>
+              <button type="button" id="btn-reset-cam" class="btn-secondary">
+                Reset Camera
+              </button>
+              <button type="button" id="btn-pause-sim" class="btn-secondary" aria-pressed="false">
+                Pause Sim
+              </button>
+              <button type="button" id="btn-compare-mode" class="btn-primary" aria-pressed="false">
+                Compare Mode: Off
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- KPI Strip -->
+        <section id="kpi-strip" class="kpi-strip" aria-label="Key system metrics">
+          <div class="kpi-cell kpi-lead">
+            <span class="kpi-label">Estimated Throughput</span>
+            <div class="kpi-val-row">
+              <span id="kpi-fps" class="kpi-value num">60.0</span>
+              <span id="kpi-fps-unit" class="kpi-unit">FPS</span>
+            </div>
+            <span id="kpi-bottleneck-short" class="kpi-sub">Balanced pipeline</span>
+          </div>
+          <div class="kpi-cell">
+            <span class="kpi-label">CPU Package</span>
+            <div class="kpi-val-row">
+              <span id="kpi-cpu-temp" class="kpi-value num">42.0</span>
+              <span class="kpi-unit">°C</span>
+            </div>
+            <span id="kpi-cpu-clock" class="kpi-sub num">4.20 GHz · 28 W</span>
+          </div>
+          <div class="kpi-cell">
+            <span class="kpi-label">GPU Core</span>
+            <div class="kpi-val-row">
+              <span id="kpi-gpu-temp" class="kpi-value num">40.5</span>
+              <span class="kpi-unit">°C</span>
+            </div>
+            <span id="kpi-gpu-clock" class="kpi-sub num">1950 MHz · 35 W</span>
+          </div>
+          <div class="kpi-cell">
+            <span class="kpi-label">VRM / SSD / Batt</span>
+            <div class="kpi-val-row">
+              <span id="kpi-vrm-temp" class="kpi-value num">44.0</span>
+              <span class="kpi-unit">°C</span>
+            </div>
+            <span id="kpi-aux-temps" class="kpi-sub num">SSD 38°C · Batt 31°C</span>
+          </div>
+          <div class="kpi-cell">
+            <span class="kpi-label">Cooling &amp; Fan Speed</span>
+            <div class="kpi-val-row">
+              <span id="kpi-fan-rpm" class="kpi-value num">2,400</span>
+              <span class="kpi-unit">RPM</span>
+            </div>
+            <span id="kpi-throttle-badge" class="kpi-sub status-ok">No thermal throttle</span>
+          </div>
+        </section>
+
+        <!-- Primary Stage: 3D Viewport(s) + Advisory Rail -->
+        <section class="stage-grid" aria-label="3D Thermal Viewport and Bottleneck Diagnostics">
+          <div class="viewport-card" id="viewport-card">
+            <div class="viewport-header">
+              <div class="viewport-title-group">
+                <span class="panel-title" id="viewport-label-a">Config A — Active Assembly</span>
+                <span class="viewport-hint">Left-drag orbit · Right-drag pan · Scroll zoom · Click component to inspect</span>
+              </div>
+              <div class="heatmap-legend" aria-label="Temperature color scale">
+                <span class="legend-temp num">25°C</span>
+                <span class="legend-bar" aria-hidden="true">
+                  <span class="legend-stop stop-blue"></span>
+                  <span class="legend-stop stop-cyan"></span>
+                  <span class="legend-stop stop-yellow"></span>
+                  <span class="legend-stop stop-red"></span>
+                </span>
+                <span class="legend-temp num">100°C+</span>
+              </div>
+            </div>
+
+            <!-- Dual / Single Canvas Container -->
+            <div id="canvas-stage" class="canvas-stage">
+              <div id="viewport-a" class="viewport-pane">
+                <div class="pane-badge" id="pane-badge-a" hidden>Config A</div>
+                <canvas id="canvas-a" aria-label="3D Laptop Thermal Model A"></canvas>
+              </div>
+              <div id="viewport-b" class="viewport-pane" hidden>
+                <div class="pane-badge" id="pane-badge-b">Config B</div>
+                <canvas id="canvas-b" aria-label="3D Laptop Thermal Model B"></canvas>
+              </div>
+
+              <!-- 3D Component Tooltip (Screen-space projected) -->
+              <div id="component-tooltip" class="component-tooltip" role="status" aria-live="polite" hidden>
+                <div class="tooltip-header">
+                  <span id="tt-name" class="tooltip-title">CPU Die</span>
+                  <span id="tt-status" class="pill pill-positive">Nominal</span>
+                </div>
+                <div class="tooltip-grid">
+                  <div class="tt-row">
+                    <span>Temperature</span>
+                    <strong id="tt-temp" class="num">42.0 °C</strong>
+                  </div>
+                  <div class="tt-row">
+                    <span>Clock / Rate</span>
+                    <strong id="tt-clock" class="num">4.20 GHz</strong>
+                  </div>
+                  <div class="tt-row">
+                    <span>Load / Power</span>
+                    <strong id="tt-load" class="num">25% · 28.0 W</strong>
+                  </div>
+                  <div class="tt-row">
+                    <span>Throttle</span>
+                    <strong id="tt-throttle" class="num">100°C limit</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Non-WebGL / Reduced-Motion Accessible Fallback Table -->
+              <div id="webgl-fallback" class="webgl-fallback" hidden>
+                <p>WebGL context unavailable — showing live component thermal matrix:</p>
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Component</th>
+                      <th class="num">Temp (°C)</th>
+                      <th class="num">Clock / Speed</th>
+                      <th class="num">Load (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fallback-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Explode & Component Quick-Select Bar -->
+            <div class="viewport-footer">
+              <div class="explode-slider-wrap">
+                <label for="slider-explode">Explode Factor</label>
+                <input
+                  type="range"
+                  id="slider-explode"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0.65"
+                />
+                <span id="val-explode" class="num">65%</span>
+              </div>
+              <div class="component-pills" role="toolbar" aria-label="Inspect component by keyboard">
+                <button type="button" class="comp-chip" data-comp="cpu">CPU</button>
+                <button type="button" class="comp-chip" data-comp="gpu">GPU</button>
+                <button type="button" class="comp-chip" data-comp="vrm">VRM</button>
+                <button type="button" class="comp-chip" data-comp="ram">RAM</button>
+                <button type="button" class="comp-chip" data-comp="ssd">SSD</button>
+                <button type="button" class="comp-chip" data-comp="battery">Battery</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Diagnostics & Optimization Column -->
+          <div id="diagnostics-mount" class="diagnostics-column"></div>
+        </section>
+
+        <!-- Bottom Live Charts Row -->
+        <section id="charts-mount" class="charts-grid" aria-label="Live telemetry charts"></section>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
