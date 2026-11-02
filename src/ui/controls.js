@@ -101,7 +101,7 @@ export function createControlsPanel(mountEl, options) {
         <select class="field-select" id="ctrl-workload">
           ${WORKLOAD_PRESETS.map((w) => `<option value="${w.id}">${w.name}</option>`).join('')}
         </select>
-        <span id="workload-desc" style="font-size: 11px; color: var(--faint); line-height: 1.35;"></span>
+        <span id="workload-desc" style="font-size: 12px; color: var(--muted); line-height: 1.4;"></span>
       </div>
 
       <div class="field-group">

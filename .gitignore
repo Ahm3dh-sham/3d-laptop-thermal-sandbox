@@ -1,5 +1,10 @@
 node_modules/
 dist/
 .vercel/
+.agent/
+.claude/
+.gemini/
 .DS_Store
 *.log
+
+.vercel

@@ -25,17 +25,17 @@ export function createDiagnosticsPanel(mountEl, callbacks) {
         <span class="panel-title">Pipeline Bottleneck</span>
         <span class="pill pill-negative" id="bn-stage-pill">GPU Stage</span>
       </div>
-      <p id="bn-explanation" style="margin: 0; font-size: 12px; color: var(--text); line-height: 1.4;">
+      <p id="bn-explanation" style="margin: 0; font-size: 13px; color: var(--text); line-height: 1.45;">
         Evaluating 4-stage pipeline...
       </p>
       <div id="bn-bars" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
         ${['cpu', 'ram', 'gpu', 'ssd']
           .map(
             (id) => `
-          <div style="display: grid; grid-template-columns: 42px 1fr 48px; align-items: center; gap: 8px; font-size: 11px;">
+          <div style="display: grid; grid-template-columns: 44px 1fr 54px; align-items: center; gap: 8px; font-size: 12px;">
             <span style="color: var(--muted); font-weight: 500; text-transform: uppercase;">${id}</span>
             <div style="height: 6px; background: var(--raised); border-radius: 3px; overflow: hidden;">
-              <div id="bar-fill-${id}" style="height: 100%; width: 50%; background: var(--accent);"></div>
+              <div id="bar-fill-${id}" style="height: 100%; width: 50%; background: var(--accent); transition: width 180ms var(--ease-out), background-color 180ms ease;"></div>
             </div>
             <span id="bar-val-${id}" class="num" style="text-align: right; color: var(--muted);">100</span>
           </div>
@@ -66,7 +66,7 @@ export function createDiagnosticsPanel(mountEl, callbacks) {
     <div class="panel-card">
       <div class="panel-header-row">
         <span class="panel-title" id="matrix-table-title">Component Matrix</span>
-        <span style="font-size: 11px; color: var(--muted);" id="matrix-table-sub">Total Power: 65 W</span>
+        <span style="font-size: 12px; color: var(--muted);" id="matrix-table-sub">Total Power: 65 W</span>
       </div>
       <table class="data-table" id="telemetry-table">
         <thead id="telemetry-thead">
