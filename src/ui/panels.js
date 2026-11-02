@@ -25,17 +25,17 @@ export function createDiagnosticsPanel(mountEl, callbacks) {
         <span class="panel-title">Pipeline Bottleneck</span>
         <span class="pill pill-negative" id="bn-stage-pill">GPU Stage</span>
       </div>
-      <p id="bn-explanation" style="margin: 0; font-size: 13px; color: var(--text); line-height: 1.45;">
+      <p id="bn-explanation" class="wrap-safe" style="margin: 0; font-size: 13px; color: var(--text); line-height: 1.45;">
         Evaluating 4-stage pipeline...
       </p>
       <div id="bn-bars" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
         ${['cpu', 'ram', 'gpu', 'ssd']
           .map(
             (id) => `
-          <div style="display: grid; grid-template-columns: 44px 1fr 54px; align-items: center; gap: 8px; font-size: 12px;">
+          <div style="display: grid; grid-template-columns: 44px minmax(0, 1fr) 58px; align-items: center; gap: 8px; font-size: 12px;">
             <span style="color: var(--muted); font-weight: 500; text-transform: uppercase;">${id}</span>
             <div style="height: 6px; background: var(--raised); border-radius: 3px; overflow: hidden;">
-              <div id="bar-fill-${id}" style="height: 100%; width: 50%; background: var(--accent); transition: width 180ms var(--ease-out), background-color 180ms ease;"></div>
+              <div id="bar-fill-${id}" class="stage-bar-fill"></div>
             </div>
             <span id="bar-val-${id}" class="num" style="text-align: right; color: var(--muted);">100</span>
           </div>
@@ -51,14 +51,14 @@ export function createDiagnosticsPanel(mountEl, callbacks) {
         <span class="panel-title">Optimization Hint</span>
         <span class="pill pill-positive" id="opt-gain-pill">+24% Output</span>
       </div>
-      <div id="opt-title" style="font-size: 13px; font-weight: 600; color: var(--text);">
+      <div id="opt-title" class="wrap-safe" style="font-size: 13px; font-weight: 600; color: var(--text);">
         Upgrade recommendation
       </div>
-      <p id="opt-detail" style="margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4;">
+      <p id="opt-detail" class="wrap-safe" style="margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4;">
         Analyzing hardware balance...
       </p>
       <button type="button" class="btn-primary" id="btn-apply-upgrade" style="width: 100%; margin-top: 4px;">
-        Apply Recommended Upgrade
+        <span class="btn-content-morph" id="btn-apply-upgrade-label">Apply Recommended Upgrade</span>
       </button>
     </div>
 
@@ -88,6 +88,7 @@ export function createDiagnosticsPanel(mountEl, callbacks) {
   const optTitle = mountEl.querySelector('#opt-title');
   const optDetail = mountEl.querySelector('#opt-detail');
   const btnApplyUpgrade = mountEl.querySelector('#btn-apply-upgrade');
+  const btnApplyUpgradeLabel = mountEl.querySelector('#btn-apply-upgrade-label');
   const matrixTableTitle = mountEl.querySelector('#matrix-table-title');
   const matrixTableSub = mountEl.querySelector('#matrix-table-sub');
   const telemetryThead = mountEl.querySelector('#telemetry-thead');
@@ -108,6 +109,17 @@ export function createDiagnosticsPanel(mountEl, callbacks) {
 
   btnApplyUpgrade.addEventListener('click', () => {
     if (currentUpgradeHint && callbacks.onApplyUpgrade) {
+      // Blur-masked state transition (`emil-design-eng` §Use blur to mask imperfect transitions)
+      if (btnApplyUpgradeLabel) {
+        btnApplyUpgradeLabel.classList.add('is-transitioning');
+        btnApplyUpgradeLabel.textContent = 'Upgrade Installed ✓';
+        setTimeout(() => {
+          btnApplyUpgradeLabel.classList.remove('is-transitioning');
+        }, 180);
+        setTimeout(() => {
+          btnApplyUpgradeLabel.textContent = 'Apply Recommended Upgrade';
+        }, 1100);
+      }
       callbacks.onApplyUpgrade(currentUpgradeHint);
     }
   });
@@ -124,7 +136,7 @@ export function createDiagnosticsPanel(mountEl, callbacks) {
       const score = scores[stageId];
       const pct = Math.min(100, Math.max(8, (score / maxScore) * 100));
       const isLimiting = stageId === lim;
-      barFills[stageId].style.width = `${pct.toFixed(0)}%`;
+      barFills[stageId].style.transform = `scaleX(${(pct / 100).toFixed(3)})`;
       barFills[stageId].style.background = isLimiting ? 'var(--negative)' : 'var(--accent)';
       barVals[stageId].textContent = `${Math.round(score)} pts`;
       barVals[stageId].style.color = isLimiting ? 'var(--negative)' : 'var(--muted)';

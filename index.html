@@ -2,7 +2,10 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+    <meta name="color-scheme" content="dark" />
     <title>ThermBench 3D — Laptop Thermal &amp; Bottleneck Sandbox</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -194,13 +197,13 @@
                 />
                 <span id="val-explode" class="num">65%</span>
               </div>
-              <div class="component-pills" role="toolbar" aria-label="Inspect component by keyboard">
-                <button type="button" class="comp-chip" data-comp="cpu">CPU</button>
-                <button type="button" class="comp-chip" data-comp="gpu">GPU</button>
-                <button type="button" class="comp-chip" data-comp="vrm">VRM</button>
-                <button type="button" class="comp-chip" data-comp="ram">RAM</button>
-                <button type="button" class="comp-chip" data-comp="ssd">SSD</button>
-                <button type="button" class="comp-chip" data-comp="battery">Battery</button>
+              <div class="component-pills" role="toolbar" aria-label="Inspect component by keyboard (keys 1-6)">
+                <button type="button" class="comp-chip" data-comp="cpu" title="Shortcut: 1">1 · CPU</button>
+                <button type="button" class="comp-chip" data-comp="gpu" title="Shortcut: 2">2 · GPU</button>
+                <button type="button" class="comp-chip" data-comp="vrm" title="Shortcut: 3">3 · VRM</button>
+                <button type="button" class="comp-chip" data-comp="ram" title="Shortcut: 4">4 · RAM</button>
+                <button type="button" class="comp-chip" data-comp="ssd" title="Shortcut: 5">5 · SSD</button>
+                <button type="button" class="comp-chip" data-comp="battery" title="Shortcut: 6">6 · Battery</button>
               </div>
             </div>
           </div>

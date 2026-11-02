@@ -52,6 +52,10 @@ export function createControlsPanel(mountEl, options) {
           ${LAPTOP_PROFILES.map((p) => `<option value="${p.id}">${p.name}</option>`).join('')}
         </select>
       </div>
+      <button type="button" class="btn-secondary btn-hold" id="btn-thermal-shock" title="Hold for 1.2s to inject 100°C thermal spike across silicon">
+        <span class="btn-hold-overlay" aria-hidden="true"></span>
+        <span style="position: relative; z-index: 1;">Hold 1.2s: Thermal Shock</span>
+      </button>
     </div>
 
     <div class="control-section">
@@ -152,6 +156,39 @@ export function createControlsPanel(mountEl, options) {
   const ctrlPowerLimit = mountEl.querySelector('#ctrl-powerlimit');
   const valPowerLimit = mountEl.querySelector('#val-powerlimit');
   const btnResetThermals = mountEl.querySelector('#btn-reset-thermals');
+  const btnThermalShock = mountEl.querySelector('#btn-thermal-shock');
+
+  // Hold-to-confirm pattern (`emil-design-eng` §Hold-to-delete / asymmetric enter-exit timing):
+  // 1.2s linear clip-path fill on press; 200ms ease-out snap-back on release.
+  let holdTimer = null;
+  let isHolding = false;
+
+  function cancelHold() {
+    if (!isHolding) return;
+    isHolding = false;
+    btnThermalShock.classList.remove('is-holding');
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  }
+
+  btnThermalShock.addEventListener('pointerdown', (e) => {
+    if (isHolding) return; // Multi-touch protection
+    isHolding = true;
+    btnThermalShock.setPointerCapture(e.pointerId);
+    btnThermalShock.classList.add('is-holding');
+    holdTimer = setTimeout(() => {
+      cancelHold();
+      if (options.onThermalShock) {
+        options.onThermalShock();
+      }
+    }, 1200);
+  });
+
+  btnThermalShock.addEventListener('pointerup', cancelHold);
+  btnThermalShock.addEventListener('pointercancel', cancelHold);
+  btnThermalShock.addEventListener('lostpointercapture', cancelHold);
 
   function syncInputsFromSelection() {
     const sel = options.getActiveSelection();

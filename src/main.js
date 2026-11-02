@@ -11,6 +11,10 @@ import { createInteractionController } from './view/interaction.js';
 import { createControlsPanel } from './ui/controls.js';
 import { createChartsPanel } from './ui/charts.js';
 import { createDiagnosticsPanel } from './ui/panels.js';
+import { initToaster, toast } from './ui/toaster.js';
+import { createPrototypeAndBreakHarness, applyDatasetBoundary } from './ui/breakHarness.js';
+
+initToaster();
 
 const COMPONENT_LABELS = {
   cpu: 'CPU — Processor Die',
@@ -19,6 +23,15 @@ const COMPONENT_LABELS = {
   ram: 'RAM — Memory Modules',
   ssd: 'SSD — NVMe Storage',
   battery: 'Battery — Li-Ion Pack',
+};
+
+const SHORTCUT_MAP = {
+  '1': 'cpu',
+  '2': 'gpu',
+  '3': 'vrm',
+  '4': 'ram',
+  '5': 'ssd',
+  '6': 'battery',
 };
 
 // Instantiate two independent simulators:
@@ -95,7 +108,7 @@ function adaptSnapshotForView(snapshot) {
   const components = {};
   for (const [id, comp] of Object.entries(snapshot.components)) {
     components[id] = {
-      label: COMPONENT_LABELS[id] || id.toUpperCase(),
+      label: comp.label || comp.customLabel || COMPONENT_LABELS[id] || id.toUpperCase(),
       temp: comp.temp,
       throttleTemp: comp.throttleTemp,
       clockDisplay: comp.clockText,
@@ -119,6 +132,46 @@ function getActiveSimulator() {
   return compareMode && activeSlot === 'B' ? simB : simA;
 }
 
+// Mount Prototype & Break-UI Harness (floating bottom pill: Bench / Compact / Cinema + Demo data / Worst case + Replay)
+let lastThrottleToastActive = false;
+const harness = createPrototypeAndBreakHarness({
+  onVariantChange: (variantId) => {
+    requestAnimationFrame(() => {
+      if (viewA) viewA.resize();
+      if (viewB && compareMode) viewB.resize();
+    });
+    toast(`Layout Variant: ${variantId.toUpperCase()}`, {
+      id: 'proto-variant-toast',
+      type: 'info',
+      description: 'Switched workspace layout via prototype picker (←/→ or 1–3).',
+      duration: 2400,
+    });
+  },
+  onDataModeChange: (dataMode) => {
+    refreshUiNow();
+    toast(dataMode === 'worst' ? 'Worst-Case Data Active (?data=worst)' : 'Demo Data Restored', {
+      id: 'break-ui-mode-toast',
+      type: dataMode === 'worst' ? 'warning' : 'success',
+      description:
+        dataMode === 'worst'
+          ? 'Injecting long German compounds, diacritics, and extreme numbers at the data boundary.'
+          : 'Reverted telemetry to calibrated hardware strings.',
+      duration: 3400,
+    });
+  },
+  onReplay: () => {
+    simA.resetThermals();
+    simB.resetThermals();
+    refreshUiNow();
+    toast('Thermal Replay Triggered', {
+      id: 'thermal-replay-toast',
+      type: 'info',
+      description: 'Reset component temperatures to ambient baseline.',
+      duration: 2400,
+    });
+  },
+});
+
 // Mount Left Sidebar Controls
 const controlsMount = document.getElementById('controls-mount');
 const controlsPanel = createControlsPanel(controlsMount, {
@@ -131,11 +184,37 @@ const controlsPanel = createControlsPanel(controlsMount, {
       getActiveSimulator().setConfig(patch);
     }
     refreshUiNow();
+    if (patch.presetId || patch.workloadId) {
+      const cfg = getActiveSimulator().getResolvedConfig();
+      toast(`Active Profile: ${cfg.cpu.shortName} · ${cfg.workload.name}`, {
+        id: 'profile-change-toast',
+        type: 'info',
+        description: `Cooling: ${cfg.cooling.name} (${cfg.powerLimitScale}% Power Limit)`,
+        duration: 2600,
+      });
+    }
   },
   onResetThermals: () => {
     simA.resetThermals();
     simB.resetThermals();
+    lastThrottleToastActive = false;
     refreshUiNow();
+    toast('Thermals Reset to Ambient', {
+      id: 'reset-thermals-toast',
+      type: 'success',
+      description: `All components cooled to ${simA.getSelection().ambientTemp}°C ambient.`,
+      duration: 2500,
+    });
+  },
+  onThermalShock: () => {
+    getActiveSimulator().triggerThermalShock();
+    refreshUiNow();
+    toast('Thermal Shock Injected (101°C)', {
+      id: 'thermal-shock-toast',
+      type: 'error',
+      description: 'Hold-to-confirm completed: forced instant TjMax thermal throttling & max fan RPM.',
+      duration: 4200,
+    });
   },
   onSelectSlot: (slot) => {
     activeSlot = slot;
@@ -159,6 +238,12 @@ const diagnosticsPanel = createDiagnosticsPanel(diagnosticsMount, {
       targetSim.setConfig(patch);
       controlsPanel.syncInputsFromSelection();
       refreshUiNow();
+      toast(`Upgrade Applied: ${hint.title}`, {
+        id: 'upgrade-applied-toast',
+        type: 'success',
+        description: hint.actionLabel,
+        duration: 3400,
+      });
     }
   },
   onSelectComponent: (compId) => {
@@ -228,6 +313,14 @@ btnCompareMode.addEventListener('click', () => {
   });
 
   refreshUiNow();
+  toast(compareMode ? 'Side-by-Side Compare Mode Enabled' : 'Single Config View Restored', {
+    id: 'compare-mode-toast',
+    type: 'info',
+    description: compareMode
+      ? 'Running Config A (Zephyrus G14) vs Config B (Legion Pro 7i) simultaneously.'
+      : 'Focused on Config A.',
+    duration: 2800,
+  });
 });
 
 window.addEventListener('resize', () => {
@@ -235,15 +328,49 @@ window.addEventListener('resize', () => {
   if (viewB && compareMode) viewB.resize();
 });
 
+// Keyboard shortcuts (emil-design-eng & remove-animations: instant 0ms selection for keyboard actions)
+window.addEventListener('keydown', (e) => {
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  if (SHORTCUT_MAP[e.key]) {
+    e.preventDefault();
+    const compId = SHORTCUT_MAP[e.key];
+    if (interactionA) {
+      tooltipEl.setAttribute('data-instant', '');
+      interactionA.selectComponent(compId);
+      updateTooltipNow();
+    }
+    const chips = document.querySelectorAll('#component-pills .comp-chip');
+    chips.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.comp === compId);
+    });
+  } else if (e.key === 'r' || e.key === 'R') {
+    e.preventDefault();
+    simA.resetThermals();
+    simB.resetThermals();
+    lastThrottleToastActive = false;
+    refreshUiNow();
+    toast('Thermal Replay (Shortcut R)', {
+      id: 'thermal-replay-toast',
+      type: 'info',
+      description: 'Reset component temperatures to ambient baseline.',
+      duration: 2200,
+    });
+  }
+});
+
 function updateTooltipNow() {
   if (!interactionA) return;
-  const snapA = simA.getSnapshot();
+  const snapA = applyDatasetBoundary(simA.getSnapshot(), harness.getDataMode());
   interactionA.updateTooltip(adaptSnapshotForView(snapA));
 }
 
 function refreshUiNow() {
-  const snapA = simA.getSnapshot();
-  const snapB = simB.getSnapshot();
+  const dataMode = harness.getDataMode();
+  const snapA = applyDatasetBoundary(simA.getSnapshot(), dataMode);
+  const snapB = applyDatasetBoundary(simB.getSnapshot(), dataMode);
   const activeSnap = compareMode && activeSlot === 'B' ? snapB : snapA;
   const activeConfig = getActiveSimulator().getResolvedConfig();
 
@@ -278,12 +405,23 @@ function refreshUiNow() {
     const maxDrop = Math.max(cpuC.throttlePct, gpuC.throttlePct, vrmC.throttlePct);
     kpiThrottleBadge.textContent = `Thermal Throttle (-${maxDrop}%)`;
     kpiThrottleBadge.className = 'kpi-sub status-crit';
+    if (!lastThrottleToastActive) {
+      lastThrottleToastActive = true;
+      toast(`Thermal Throttling Active (-${maxDrop}% Clock)`, {
+        id: 'thermal-throttle-alert',
+        type: 'warning',
+        description: 'Exceeded TjMax threshold. Upgrade cooling or reduce power limit.',
+        duration: 4000,
+      });
+    }
   } else if (cpuC.temp > cpuC.throttleTemp - 5 || gpuC.temp > gpuC.throttleTemp - 5) {
     kpiThrottleBadge.textContent = 'Near Throttle Threshold';
     kpiThrottleBadge.className = 'kpi-sub status-warn';
+    lastThrottleToastActive = false;
   } else {
     kpiThrottleBadge.textContent = 'No thermal throttle';
     kpiThrottleBadge.className = 'kpi-sub status-ok';
+    lastThrottleToastActive = false;
   }
 
   diagnosticsPanel.update(activeSnap, snapA, snapB, compareMode);
@@ -301,8 +439,14 @@ function refreshUiNow() {
   }
 }
 
-// Initial UI render
+// Initial UI render + initial toast notification
 refreshUiNow();
+toast('ThermBench 3D Ready — All Skills Active', {
+  id: 'welcome-toast',
+  type: 'info',
+  description: 'Keys 1–6 inspect dies · Hold 1.2s for Thermal Shock · Bottom pill switches layouts & Worst-case data.',
+  duration: 5000,
+});
 
 // Main 60 FPS Render & Fixed-Timestep Simulation Loop using THREE.Timer
 const timer = new THREE.Timer();
@@ -321,12 +465,13 @@ function animate(timestamp) {
     }
   }
 
-  const viewStateA = adaptSnapshotForView(simA.getSnapshot());
+  const dataMode = harness.getDataMode();
+  const viewStateA = adaptSnapshotForView(applyDatasetBoundary(simA.getSnapshot(), dataMode));
   if (viewA) {
     viewA.renderFrame(viewStateA, dt, elapsed, reducedMotion);
   }
   if (compareMode && viewB) {
-    const viewStateB = adaptSnapshotForView(simB.getSnapshot());
+    const viewStateB = adaptSnapshotForView(applyDatasetBoundary(simB.getSnapshot(), dataMode));
     viewB.renderFrame(viewStateB, dt, elapsed, reducedMotion);
   }
 

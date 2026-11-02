@@ -23,6 +23,7 @@ export function createInteractionController({
 
   let hoveredId = null;
   let selectedId = "cpu"; // Default selected component so users immediately see live telemetry
+  let tooltipAlreadyOpen = false;
 
   const ttName = document.getElementById("tt-name");
   const ttStatus = document.getElementById("tt-status");
@@ -110,6 +111,7 @@ export function createInteractionController({
     const activeId = selectedId || hoveredId;
     if (!activeId || !simState?.components?.[activeId]) {
       tooltipEl.hidden = true;
+      tooltipAlreadyOpen = false;
       return;
     }
 
@@ -127,6 +129,7 @@ export function createInteractionController({
     // Hide if behind near/far clip planes
     if (scratchWorldPos.z < -1 || scratchWorldPos.z > 1) {
       tooltipEl.hidden = true;
+      tooltipAlreadyOpen = false;
       return;
     }
 
@@ -134,7 +137,10 @@ export function createInteractionController({
     const x = ((scratchWorldPos.x + 1) * 0.5) * rect.width;
     const y = ((-scratchWorldPos.y + 1) * 0.5) * rect.height;
 
+    // `emil-design-eng` §Tooltips: skip delay/animation on subsequent hovers once one tooltip is open
+    tooltipEl.toggleAttribute("data-instant", tooltipAlreadyOpen);
     tooltipEl.hidden = false;
+    tooltipAlreadyOpen = true;
     tooltipEl.style.left = `${Math.min(Math.max(x, 125), rect.width - 125)}px`;
     tooltipEl.style.top = `${Math.min(Math.max(y, 118), rect.height - 16)}px`;
 

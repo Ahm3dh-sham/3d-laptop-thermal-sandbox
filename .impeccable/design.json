@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-02T13:15:00.000Z",
+  "title": "Design System: ThermBench 3D",
+  "extensions": {
+    "colorMeta": {
+      "ground": { "role": "neutral", "displayName": "Anodized Ground", "canonical": "#000000", "tonalRamp": ["#000000", "#111111", "#1a1a1a", "#242424", "#3d3d3d", "#949494", "#b4b4b4", "#ffffff"] },
+      "surface": { "role": "neutral", "displayName": "Instrument Surface", "canonical": "#111111", "tonalRamp": ["#08090c", "#111111", "#1a1a1a", "#262626", "#3d3d3d", "#737373", "#b4b4b4", "#f5f5f5"] },
+      "accent": { "role": "primary", "displayName": "Cryo Intake Cyan", "canonical": "#38bdf8", "tonalRamp": ["#082f49", "#0c4a6e", "#0369a1", "#0284c7", "#0ea5e9", "#38bdf8", "#7dd3fc", "#e0f2fe"] },
+      "positive": { "role": "secondary", "displayName": "Nominal Emerald", "canonical": "#3fc07a", "tonalRamp": ["#052e16", "#14532d", "#166534", "#15803d", "#22c55e", "#3fc07a", "#86efac", "#dcfce7"] },
+      "negative": { "role": "tertiary", "displayName": "Throttle Crimson", "canonical": "#e5566f", "tonalRamp": ["#4c0519", "#881337", "#9f1239", "#be123c", "#e11d48", "#e5566f", "#fda4af", "#ffe4e6"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "KPI Lead Readout", "purpose": "Primary FPS / throughput metric in the KPI strip." },
+      "headline": { "displayName": "Workspace Title", "purpose": "Top-level application header." },
+      "title": { "displayName": "Panel Header", "purpose": "Card and tooltip titles." },
+      "body": { "displayName": "Diagnostic Copy", "purpose": "Bottleneck root-cause and upgrade descriptions." },
+      "label": { "displayName": "Telemetry Mono", "purpose": "Tabular numeric readouts, axis ticks, and status badges." }
+    },
+    "shadows": [
+      { "name": "floating-tooltip", "value": "0 10px 28px -6px rgba(0, 0, 0, 0.72)", "purpose": "Separates projected 3D tooltip and toasts from the WebGL canvas." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Responsive entrance and press feedback." },
+      { "name": "ease-in-out", "value": "cubic-bezier(0.77, 0, 0.175, 1)", "purpose": "On-screen morphing and movement." },
+      { "name": "ease-drawer", "value": "cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "Toast and drawer slide transitions." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "600px" },
+      { "name": "tablet", "value": "1120px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "High-contrast primary trigger for upgrades and mode toggles.",
+      "html": "<button class=\"ds-btn-primary\">Apply Recommended Upgrade</button>",
+      "css": ".ds-btn-primary { height: 32px; padding: 0 12px; border-radius: 4px; background: #ffffff; color: #000000; border: 1px solid #ffffff; font-weight: 500; cursor: pointer; transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease; } .ds-btn-primary:active { transform: scale(0.97); }"
+    },
+    {
+      "name": "Secondary Control Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Secondary toolbar button for 3D camera, explode, and simulation controls.",
+      "html": "<button class=\"ds-btn-secondary\" aria-pressed=\"true\">Exploded View</button>",
+      "css": ".ds-btn-secondary { height: 32px; padding: 0 12px; border-radius: 4px; background: #111111; color: #ffffff; border: 1px solid #3d3d3d; font-weight: 500; cursor: pointer; transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1), border-color 150ms ease; } .ds-btn-secondary[aria-pressed=\"true\"] { border-color: #38bdf8; color: #38bdf8; } .ds-btn-secondary:active { transform: scale(0.97); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Precision Thermal Bench",
+    "overview": "ThermBench 3D is an engineering telemetry bench where the exploded 3D silicon assembly and real-time thermal/pipeline instruments share a ruled dark-room workspace.",
+    "keyCharacteristics": [
+      "Ruled T-frame data-terminal shell with 1px solid #262626 structural hairlines.",
+      "Technical grotesque (IBM Plex Sans) paired with tabular monospace (JetBrains Mono) for live telemetry counters.",
+      "Origin-aware 3D projected tooltips, physical press feedback (scale(0.97)), and interruptible clip-path hold-to-stress interactions."
+    ],
+    "rules": [
+      { "name": "The Thermal Chromatic Priority Rule", "body": "Chrome never competes with the heat map: saturated red, amber, and cyan are reserved for live temperature, throttling status, and active selection.", "section": "colors" },
+      { "name": "The Tabular Telemetry Rule", "body": "Every live-updating temperature, clock frequency, wattage, RPM, and FPS readout must apply font-variant-numeric: tabular-nums (.num).", "section": "typography" }
+    ],
+    "dos": [
+      "Do use font-variant-numeric: tabular-nums on every live numerical readout.",
+      "Do gate all :hover states behind @media (hover: hover) and (pointer: fine) and provide :active { transform: scale(0.97) } press feedback.",
+      "Do animate only transform, opacity, and clip-path on UI elements under 300ms using --ease-out: cubic-bezier(0.23, 1, 0.32, 1)."
+    ],
+    "donts": [
+      "Don't use transition: all or ease-in on any UI control.",
+      "Don't animate high-frequency keyboard actions.",
+      "Don't import Three.js or DOM APIs inside /src/sim."
+    ]
+  }
+}

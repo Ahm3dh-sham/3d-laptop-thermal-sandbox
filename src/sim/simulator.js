@@ -361,6 +361,19 @@ export function createSimulator(initialProfileId = 'zephyrus_g14_2024') {
       recordHistorySample();
     },
 
+    /**
+     * Injects a 100°C+ thermal shock spike across silicon nodes to test hysteresis throttling & recovery.
+     */
+    triggerThermalShock() {
+      thermalState.temps.cpu = Math.max(thermalState.temps.cpu, resolvedConfig.cpu.throttleTemp + 4.5);
+      thermalState.temps.gpu = Math.max(thermalState.temps.gpu, resolvedConfig.gpu.throttleTemp + 4.5);
+      thermalState.temps.vrm = Math.max(thermalState.temps.vrm, 107.0);
+      thermalState.temps.ssd = Math.max(thermalState.temps.ssd, resolvedConfig.ssd.throttleTemp + 3.0);
+      thermalState.fanRpm = resolvedConfig.cooling.maxRpm;
+      stepFixed(FIXED_DT);
+      recordHistorySample();
+    },
+
     getSelection() {
       return { ...selection };
     },
